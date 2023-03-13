@@ -5,11 +5,13 @@ import _Concurrency
 // MARK: - Extension : AnyPublisher + _Concurrency
 public extension AnyPublisher {
   func asyncSink(
+    continuations: inout [CheckedContinuation<Output, any Error>],
     cancellables: inout Set<AnyCancellable>,
     completion: @autoclosure @escaping(() async throws -> ()) = {}(),
     finishedWithoutValue : @autoclosure @escaping(() async throws -> ()) = {}()
   ) async throws -> Output {
     return try await withCheckedThrowingContinuation { continuation in
+      continuations.append(continuation)
       var isFinishedWithoutValue = true
       self.sink { result in
         Task { try await completion() }
@@ -31,11 +33,13 @@ public extension AnyPublisher {
 }
 
 public extension AnyPublisher {
-  func async(
+  func asyncFirst(
+    continuations: inout [CheckedContinuation<Output, any Error>],
     completion: @autoclosure @escaping(() async throws -> ()) = {}(),
     finishedWithoutValue : @autoclosure @escaping(() async throws -> ()) = {}()
   ) async throws -> Output {
     try await withCheckedThrowingContinuation { continuation in
+      continuations.append(continuation)
       var cancellable: AnyCancellable?
       var isFinishedWithoutValue = true
       var isCompletion = false
